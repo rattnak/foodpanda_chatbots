@@ -108,8 +108,8 @@ def index():
                         <td>{{ row[3] }}</td>
                         <td>
                             <select class="order-select" onchange="markAsReceived('{{ row[2] }}', {{ row[3] }}, {{ row[0] }}, this.value)">
-                                <option value="no">No</option>
                                 <option value="yes">Yes</option>
+                                <option value="no">No</option>
                             </select>
                         </td>
                     </tr>
