@@ -51,7 +51,7 @@ async def help_command(update: Update, context: CallbackContext):
     )
 
 async def floor_express(update: Update, context: CallbackContext):
-    await update.message.reply_text('Please copy-paste your Foodpanda Order ID (format: xxxx-xxxx-xxxx).')
+    await update.message.reply_text('Please copy-paste your foodpanda Order ID (format: xxxx-xxxx-xxxx).')
     context.user_data['awaiting_order_id'] = True
 
 async def handle_message(update: Update, context: CallbackContext):
@@ -100,7 +100,8 @@ async def handle_message(update: Update, context: CallbackContext):
             await update.message.reply_text(copymessage, parse_mode='Markdown')
             
             # Message 3: Verification Instruction
-            instruction_message = (f"Please leave my order at the front desk and verify the last 4 digits of the order-id *{verification_id}* with the staff there")
+            # \nPlease leave my order at the front desk and verify the last 4 digits of the order-id *{verification_id}* with the staff there
+            instruction_message = (f"បងជួយយកកញ្ចប់អាហារខ្ញុំដាក់តុផ្ដល់ព័ត៌មាននិងបញ្ជាក់លេខកូដ4ខ្ទង់*{verification_id}* ប្រាប់បុគ្កលិកផងបង")
             await update.message.reply_text(instruction_message, parse_mode='Markdown')
             
             context.user_data['awaiting_gia_floor'] = False
