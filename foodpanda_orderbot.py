@@ -11,36 +11,42 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+# Existing Order table
 class Order(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(String, index=True, nullable=False)  # Full Order ID
-    verification_id = Column(String, nullable=False)  # Only last 4 digits
+    order_id = Column(String, index=True, nullable=False)
+    verification_id = Column(String, nullable=False)
+    gia_floor = Column(String, nullable=False)
+
+# New ReceivedOrder table
+class ReceivedOrder(Base):
+    __tablename__ = "received_orders"
+    id = Column(Integer, primary_key=True, index=True)
+    verification_id = Column(String, index=True, nullable=False)
     gia_floor = Column(String, nullable=False)
 
 Base.metadata.create_all(bind=engine)
 
 # Telegram bot setup
-TOKEN = '7402813091:AAH5xQ8w08YAX7NBKVjpqlgnz5livM4TwXE'  
+TOKEN = '7402813091:AAH5xQ8w08YAX7NBKVjpqlgnz5livM4TwXE'
 
 def validate_order_id(order_id):
-    # Updated regex to allow alphanumeric order IDs with dashes
     pattern = r'^[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}$'
     return re.match(pattern, order_id) is not None
 
 def extract_last_4_digits(order_id):
-    # Extract last 4 alphanumeric characters
     if validate_order_id(order_id):
         return order_id[-4:]
     else:
         return "Invalid format"
 
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text('Welcome to the Foodpanda GIA Floor Delivery Bot! Use /help to proceed.')
+    await update.message.reply_text('Welcome to the foodpanda GIA Floor Delivery Bot! Use /help to proceed.')
 
 async def help_command(update: Update, context: CallbackContext):
     await update.message.reply_text(
-        'Copy-paste your Foodpanda Order ID so we can have our picker drop off your order at your floor in GIA Tower.\n'
+        'Copy-paste your foodpanda Order ID so we can have our picker drop off your order at your floor in GIA Tower.\n'
         'Click /floorExpress to get started.'
     )
 
@@ -72,13 +78,16 @@ async def handle_message(update: Update, context: CallbackContext):
             db_order = Order(order_id=order_id, verification_id=verification_id, gia_floor=gia_floor)
             db.add(db_order)
             db.commit()
-            db.refresh(db_order)
+            
+            # Save to received_orders table
+            received_order = ReceivedOrder(verification_id=verification_id, gia_floor=gia_floor)
+            db.add(received_order)
+            db.commit()
             db.close()
 
             # Store verification_id in user_data
             context.user_data['verification_id'] = verification_id
 
-            
             # Message 1: Summary
             summary_message = (f"*Summary:*\n\n"
                                f"Order-ID: `{order_id}`\n"
@@ -129,6 +138,7 @@ async def handle_response(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "We're sorry to hear that. Please provide details about the issue, and we'll address it promptly."
         )
+
 def main():
     application = Application.builder().token(TOKEN).build()
     application.add_handler(CommandHandler('start', start))
@@ -136,14 +146,13 @@ def main():
     application.add_handler(CommandHandler('floorExpress', floor_express))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    #to be removed
+    # Command handlers for additional actions
     application.add_handler(CommandHandler('check_in', front_desk))
     application.add_handler(CommandHandler('otw', elevator_arrive))
     application.add_handler(CommandHandler('almost', almost_floor))
     application.add_handler(CommandHandler('drop', floor_arrive))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))
 
-    
     application.run_polling()
 
 if __name__ == '__main__':
