@@ -28,6 +28,9 @@ def index():
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Customer Orders Dashboard</title>
             <style>
+                *{
+                    border-radius: 5px;
+                }
                 body {
                     font-family: Arial, sans-serif;
                     margin: 20px;
