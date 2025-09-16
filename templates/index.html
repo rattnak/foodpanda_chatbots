@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Order Records</h1>
+        <!-- Search by Verification ID -->
+        <form method="GET" action="/searchById">
+            <input type="text" name="query1" placeholder="Search by Verification ID" class="form-control mb-3">
+        </form>
+        <!-- Search by Phone Number -->
+        <form method="GET" action="/searchByPN">
+            <input type="text" name="query2" placeholder="Search by Phone Number" class="form-control mb-3">
+        </form>
+        <!-- Reset Search Button -->
+        <a href="/" class="btn btn-secondary mt-3">Reset Search</a>
+        
+        <!-- Order Table -->
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Telegram Name</th>
+                    <th>Order ID</th>
+                    <th>Verification ID</th>
+                    <th>Phone Number</th>
+                    <th>Floor Number</th>
+                    <th>Status</th>
+                    <th>GIA Arrival</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.telegram_name }}</td>
+                    <td>{{ order.order_id }}</td>
+                    <td>{{ order.verification_id }}</td>
+                    <td>{{ order.phone_number }}</td>
+                    <td>{{ order.gia_floor }}</td> 
+                    <td id="status-{{ order.id }}">{{ order.status }}</td>
+                    <td>
+                        {% if order.status != 'Arrived at GIA' and order.status != 'Picked up by Gatherer' and order.status != 'Submitted Batch' and order.status != 'Start Delivery' and order.status != 'End Delivery' %}
+                            <button 
+                                id="button-{{ order.id }}" 
+                                onclick="updateStatus({{ order.id }})" 
+                                class="btn btn-primary">
+                                OK
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function updateStatus(id) {
+            fetch('/update-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('status-' + id).textContent = 'Arrived at GIA';
+                    const button = document.getElementById('button-' + id);
+                    button.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
